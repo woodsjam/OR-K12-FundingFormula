@@ -1,0 +1,82 @@
+---
+title: "Changes to the K12 Funding Formulas"
+output: beamer_presentation
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Warning
+
+Slides are not done.  This is just some todo notes for me.
+
+## Funding Basics
+
+Details on the interaction of property tax with the state allocation.
+
++ Get more property tax, get less from the state
++ A few districts in a few years get nothing from the state because high property values and few students
+
+## The Two Funding Formulas
+
+From  ORS 327.013
+
++ the cost sharing transportation formula
++ the non-cost sharing general formula
+
+
+## How Equal Funding Results in Unequal Class size
+
++ Will pull data for this and make a graph that shows class size vs school year for rural (low salary) and urban (high salary) districts
++ Quick illustrative average class size
+    + PPS 23(They have extra funding)
+    + Parkrose 27
+    + David Douglas 26
+    + Centennial 27
+    + Reynolds 25
++ Rural
+    + Bandon 20
+    + Baker 12
+    + Gervis 21
+    + Many in the 10s
+
+
+## What this Means  
+
++ Even if you fund the Quality Education Model fully
++ High cost areas will still have high class sizes, lower test scores and lower graduation rates than the low cost areas.
++ Funding that puts class size in high cost areas into the low 20s would put class size in rural, low cost, areas into the low teens or even single digits.
++ Equal funding is not the same as equitable treatment.
+
+## Could you move funding to increase aggregate rates?
+
++ Decreasing class size when class sizes are large generates larger increases than decreasing class sizes when class size is small.
+
++ IOW, Moving from 27 to 26 increases graduation rates more than decreasing class size from 20 to 19.
+
+    
+## Can we Change the funding formula?
+
+It depends ...
+
+Oregon Constitution VIII.8(2)
+
+ (2) Consistent with such legal obligation as it may have to maintain substantial equity in state funding ...
+ 
+ + We have variations in the transportation component by cost
+ + We have variations in the general component based on experience.
+ 
+##  What is the change?
+
+$$Funding~Percentage * (\$4,500 + \$25(Average~Teacher~Experience - State~Average)) * ADMw$$
+
+to
+
+$$Funding Percentage * (\$4,500 + m * Average~Annual~Teacher~Salary) * ADMw$$
+
+The key is m.
+
++ Big m give more equal class size but reduces incentives to negotiate over salary
++ Small m gives less equal class size but increases incentives to negotiate
