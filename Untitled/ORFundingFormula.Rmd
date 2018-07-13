@@ -1,0 +1,548 @@
+---
+title: "Converting Oregon's K12 Funding Formula for More Equal Class Size and Higher Aggregate Graduation Rates"
+short: "Cost Sharing"
+journal: "AER" # AER, AEJ, PP, JEL
+month: "`r lubridate::month(Sys.time())`"
+year: "`r lubridate::year(Sys.time())`"
+vol: 1
+issue: 1
+jel:
+  - A10
+  - A11
+keywords:
+  - K12 Education
+  - Cost Sharing Contracts
+author:
+  - name: James Woods
+    firstname: James
+    surname: Woods
+    email: woodsj@pdx.edu
+    affiliation: Portland State University
+
+acknowledgements: |
+  ""
+abstract: |
+  Oregon Equalized funding per student as part of its property tax reform in the 1990s.  The funding formula makes some adjustments for the kinds of students, e.g., pregnant or low-income, to  produce weighted average daily measurement. It then adjusts for local property tax collections and makes a small correction  for more experienced faculty.  Because the forumula does not take into account salary differences, class size varies considerably accross school districts.
+  This paper shows that there are decreasing returns from reducing class sizes with respect to graduation rates, i.e.,reducing larger classes results is larger increases in the graduation rate and that the funding formula can be adapted to reduce variance in class size while increasing the aggregate graduation rate in the state without increases in funding. 
+output: rticles::aea_article
+---
+
+
+
+```{r LoadMembershipData, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+# Enrollment Reports
+# 
+
+library(readxl)
+
+
+# Read in from local.  Error in http read so resorted to this.
+
+Membership10 <- read_excel("../MembershipReport/fallmembershipreport_20092010.xls", sheet = "School")
+
+Membership11 <- read_excel("../MembershipReport/fallmembershipreport_20102011.xls", sheet = "School (Final)")
+
+Membership12 <- read_excel("../MembershipReport/fallmembershipreport_20112012.xls", sheet = "School (Final)")
+
+Membership13 <- read_excel("../MembershipReport/fallmembershipreport_20122013.xls", sheet = "School (Final)")
+
+Membership14 <- read_excel("../MembershipReport/fallmembershipreport_20132014.xls", sheet = "School (1314)")
+
+Membership15 <- read_excel("../MembershipReport/fallmembershipreport_20142015.xls", sheet = "School (1415)")
+
+Membership16 <- read_excel("../MembershipReport/fallmembershipreport_20152016.xlsx", sheet = "School (15-16)")
+
+Membership17 <- read_excel("../MembershipReport/fallmembershipreport_20162017.xlsx", sheet = "School (16-17)")
+
+#Add year indicator to each dataframe
+#
+Membership10$Year <- 2010
+Membership11$Year <- 2011
+Membership12$Year <- 2012
+Membership13$Year <- 2013
+Membership14$Year <- 2014
+Membership15$Year <- 2015
+Membership16$Year <- 2016
+Membership17$Year <- 2017
+
+# Create common colum names for  data we need
+# 
+
+CommonNames1217 <-  c("DistrictID"              
+                      ,"District"                                       
+                      ,"SchoolID"                
+                      ,"School"                                         
+                      ,"PrevEnrollment"                       
+                      ,"Enrollment"                       
+                      ,"Male"                                  
+                      ,"PercentMale"                             
+                      ,"Female"                                 
+                      ,"PercentFemale"                            
+                      ,"AmericanIndianAlaskaNative"         
+                      ,"PercentAmericanIndianAlaskaNative"    
+                      ,"Asian"                                  
+                      ,"PercentAsian"                             
+                      ,"NativeHawaiianPacificIslander"      
+                      ,"PercentNativeHawaiianPacificIslander"
+                      ,"AfricanAmerican"                 
+                      ,"PercentAfricanAmerican"           
+                      ,"Hispanic"                       
+                      ,"PercentHispanic"                  
+                      ,"White"                                  
+                      ,"PercentWhite"                            
+                      ,"Multiracial"                            
+                      ,"PercentMultiracial"                       
+                      ,"Kindergarten"                           
+                      ,"GradeOne"                              
+                      ,"GradeTwo"                              
+                      ,"GradeThree"                            
+                      ,"GradeFour"                             
+                      ,"GradeFive"                             
+                      ,"GradeSix"                              
+                      ,"GradeSeven"                            
+                      ,"GradeEight"                            
+                      ,"GradeNine"                             
+                      ,"GradeTen"                              
+                      ,"GradeEleven"                           
+                      ,"GradeTwelve"                           
+                      ,"Year") 
+
+
+
+names(Membership12) <- CommonNames1217
+names(Membership13) <- CommonNames1217
+names(Membership14) <- CommonNames1217
+names(Membership15) <- CommonNames1217
+names(Membership16) <- CommonNames1217
+names(Membership17) <- CommonNames1217
+
+# Only deal with counts not percents
+# 
+# 
+library(dplyr)
+Membership12 %>% select(-contains("Percent")) -> Membership12
+Membership13 %>% select(-contains("Percent")) -> Membership13
+Membership14 %>% select(-contains("Percent")) -> Membership14
+Membership15 %>% select(-contains("Percent")) -> Membership15
+Membership16 %>% select(-contains("Percent")) -> Membership16
+Membership17 %>% select(-contains("Percent")) -> Membership17
+
+Membership10 %>% select(-contains("%")) -> Membership10
+Membership11 %>% select(-contains("%")) -> Membership11
+
+
+
+Membership10 %>%
+  rename(
+    DistrictID = "Attnd\nDistInstID",
+    SchoolID = "Attnd\nSchlInstID",  
+    Enrollment = "2009-10\nTotal Enrollment",                 
+    Male = "2009-10 Male",                                    
+    Female ="2009-10\nFemale",                                                      
+    AmericanIndianAlaskaNative="2009-10\nAmerican Indian/Alaskan Native\n(Non-Hispanic)",                  
+    
+    AfricanAmerican= "2009-10\nBlack/African American\n(Non-Hispanic)",
+    Hispanic= "2009-10\nHispanic/Latino",                                                 
+    White = "2009-10\nWhite\n(Non-Hispanic)",                                           
+    Multiracial = "2009-10\nMultiracial\n(Non-Hispanic)",
+    
+    Kindergarten = "2009-10 Kindergarten",                                                     
+    GradeOne = "2009-10 Grade One",                                                        
+    GradeTwo = "2009-10 Grade Two",                                                        
+    GradeThree = "2009-10 Grade Three",                                                      
+    GradeFour = "2009-10 Grade Four",                                                       
+    GradeFive = "2009-10 Grade Five",                                                       
+    GradeSix = "2009-10 Grade Six",                                                        
+    GradeSeven = "2009-10 Grade Seven",                                                      
+    GradeEight = "2009-10 Grade Eight",                                                      
+    GradeNine = "2009-10 Grade Nine",                                                       
+    GradeTen = "2009-10 Grade Ten",                                                        
+    GradeEleven = "2009-10 Grade Eleven",                                                     
+    GradeTwelve = "2009-10 Grade Twelve",                                                     
+    NativeHawaiianPacificIslander = `For Future Reference\n2009-10\nPacific Islander\n(Non-Hispanic)`,
+    
+    Asian = `For Future Reference\n2009-10\nAsian\n(Non-Hispanic)`
+  ) %>%
+  select( -contains("2009-10")) -> Membership10
+
+Membership10$PrevEnrollment <- NA
+
+Membership11 %>% 
+  rename( DistrictID = "Attending\nDistrict\nInstID",                                                                                       
+          SchoolID = "Attending\nSchool\nInstID",                                                     
+          PrevEnrollment = "2009-10\nTotal Enrollment",                                                     
+          Enrollment = "2010-11\nTotal Enrollment",                                                     
+          Male = "2010-11 Male",                                                                  
+          Female = "2010-11 Female",                                                                
+          AmericanIndianAlaskaNative = "2010-11\nAmerican Indian/Alaskan Native\n(Non-Hispanic)",                       
+          
+          AfricanAmerican = "2010-11\nBlack/African American\n(Non-Hispanic)",                              
+          Hispanic = "2010-11\nHispanic/Latino",                                                      
+          White = "2010-11\nWhite\n(Non-Hispanic)",                                                
+          Multiracial = "2010-11\nMultiracial\n(Non-Hispanic)",                                          
+          Kindergarten = "2010-11\nKindergarten",                                                         
+          GradeOne = "2010-11\nGrade One",                                                            
+          GradeTwo = "2010-11\nGrade Two",                                                            
+          GradeThree = "2010-11\nGrade Three",                                                          
+          GradeFour = "2010-11\nGrade Four",                                                           
+          GradeFive = "2010-11\nGrade Five",                                                           
+          GradeSix = "2010-11\nGrade Six",                                                            
+          GradeSeven = "2010-11\nGrade Seven",                                                          
+          GradeEight = "2010-11\nGrade Eight",                                                          
+          GradeNine = "2010-11\nGrade Nine",                                                           
+          GradeTen = "2010-11\nGrade Ten",                                                            
+          GradeEleven = "2010-11\nGrade Eleven",                                                         
+          GradeTwelve = "2010-11\nGrade Twelve",                                   
+          Asian = "For Future Reference\n2010-11\nAsian only\n(Non-Hispanic)", 
+          
+          NativeHawaiianPacificIslander  = "2010-11\nAsian/Pacific Islander\n(Non-Hispanic)",            
+          Year  = "Year" 
+  ) %>%   
+  select( -contains("2010-11")) -> Membership11
+
+# Enrollment and PrevEnrollment contains notes.  Set those to NA
+Membership10$Enrollment <- as.numeric(Membership10$Enrollment)
+Membership11$Enrollment <- as.numeric(Membership11$Enrollment)
+Membership12$Enrollment <- as.numeric(Membership12$Enrollment)
+Membership13$Enrollment <- as.numeric(Membership13$Enrollment)
+Membership14$Enrollment <- as.numeric(Membership14$Enrollment)
+Membership15$Enrollment <- as.numeric(Membership15$Enrollment)
+Membership16$Enrollment <- as.numeric(Membership16$Enrollment)
+Membership17$Enrollment <- as.numeric(Membership17$Enrollment)
+
+Membership10$PrevEnrollment <- as.numeric(Membership10$PrevEnrollment)
+Membership11$PrevEnrollment <- as.numeric(Membership11$PrevEnrollment)
+Membership12$PrevEnrollment <- as.numeric(Membership12$PrevEnrollment)
+Membership13$PrevEnrollment <- as.numeric(Membership13$PrevEnrollment)
+Membership14$PrevEnrollment <- as.numeric(Membership14$PrevEnrollment)
+Membership15$PrevEnrollment <- as.numeric(Membership15$PrevEnrollment)
+Membership16$PrevEnrollment <- as.numeric(Membership16$PrevEnrollment)
+Membership17$PrevEnrollment <- as.numeric(Membership17$PrevEnrollment)
+
+
+# Join them
+Membership <- bind_rows(Membership10, Membership11, Membership12, Membership13, Membership14, Membership15, Membership16, Membership17) 
+
+# Clean space
+remove(Membership10, Membership11, Membership12, Membership13, Membership14, Membership15, Membership16, Membership17, CommonNames1217)
+
+```
+
+
+```{r LoadTestScores, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+# Source http://www.ode.state.or.us/data/reportcard/Media.aspx
+
+
+# Read in
+
+Schools16 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/17/RCmediaSchoolsAggregate.csv")
+
+Schools15 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/16/RCmediaSchoolsAggregate.csv")
+
+Schools14 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/15/RCmediaSchoolsAggregate.csv")
+
+Schools13 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/14/RCmediaSchoolsAggregate.csv")
+
+Schools12 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/13/RCmediaSchoolsAggregate.csv")
+
+Schools11 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/12/RCmediaSchoolsAggregate.csv")
+
+Schools10 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/11/RCmediaSchoolsAggregate.csv")
+
+
+# Normalize Columns
+
+Schools16 %>%
+  mutate(Year = 2016) %>%
+  select(DistrictID = District.ID, 
+         SchoolID = School.ID, 
+         Year,
+         Type = School.Type,
+         ELA = ELA.Pct.Met.2015.16,
+         Math = Math.Pct.Met.2015.16,
+         Science = Science.Pct.Met.2015.16,  #New vars follow
+         
+         PrevGradRate = Four.Year.Graduation.Rate.2014.15,
+         ELAClassSize = School.ELA.Class.Size,
+         MathClassSize = School.Math.Class.Size,
+         SciClassSize = School.Science.Class.Size,
+         SSClassSize = School.Social.Studies.Class.Size,
+         
+         PctELL = Pct.Ever.English.Learners,                
+         PctED = Pct.Economically.Disadvantaged,           
+         PctDisabled = Pct.Students.with.Disabilities,           
+         PctAsian ="Pct.Asian",                                
+         PctBlack ="Pct.Black",                                
+         PctHispanic = "Pct.Hispanic",                             
+         PctNative = "Pct.Native.American",                      
+         PctMult = "Pct.Multi.racial",                         
+         PctPacifcIsland = "Pct.Pacific.Islander",                     
+         PctWhite = "Pct.White",   
+         PctMobile = Pct.Mobile.Students.2015.16
+         ) -> Schools16
+
+Schools15 %>%
+  mutate(Year = 2015) %>%
+  select(DistrictID = District.ID, 
+         SchoolID = School.ID, 
+         Year,
+         Type = School.Type,
+         ELA = ELA.Pct.Met.2014.15,
+         Math = Math.Pct.Met.2014.15,
+         Science = Science.Pct.Met.2014.15,
+         #New vars follow
+         
+         GradRate = State.Four.Year.Graduation.Rate,
+         ELAClassSize = School.ELA.Class.Size,
+         MathClassSize = School.Math.Class.Size,
+         SciClassSize = School.Science.Class.Size,
+         SSClassSize = School.Social.Studies.Class.Size,
+         
+         PctELL = Pct.Ever.English.Learners,                
+         PctED = Pct.Economically.Disadvantaged,           
+         PctDisabled = Pct.Students.with.Disabilities,           
+         PctAsian ="Pct.Asian",                                
+         PctBlack ="Pct.Black",                                
+         PctHispanic = "Pct.Hispanic",                             
+         PctNative = "Pct.Native.American",                      
+         PctMult = "Pct.Multi.racial",                         
+         PctPacifcIsland = "Pct.Pacific.Islander",                     
+         PctWhite = "Pct.White",   
+         PctMobile = Pct.Mobile.Students.2015.16
+         
+         ) -> Schools15
+
+Schools14 %>%
+  mutate(Year = 2014) %>%
+  select(DistrictID = District.ID, 
+         SchoolID = School.ID, 
+         Year,
+         Type = School.Type,
+         Reading = Reading.Pct.Met.2013.14,
+         Writing = Writing.Pct.Met.2013.14,
+         Math = Math.Pct.Met.2013.14,
+         Science = Science.Pct.Met.2013.14) -> Schools14
+
+Schools13 %>%
+  mutate(Year = 2013) %>%
+  select(DistrictID = District.ID, 
+         SchoolID = School.ID, 
+         Year,
+         Type = School.Type,
+         Reading = Reading.Pct.Met.2012.13,
+         Writing = Writing.Pct.Met.2012.13,
+         Math = Math.Pct.Met.2012.13,
+         Science = Science.Pct.Met.2012.13) -> Schools13
+
+
+Schools12 %>%
+  mutate(Year = 2012,DistrictID = NA ) %>%
+  select(DistrictID, 
+         SchoolID = InstID, 
+         Year,
+         Type = SchoolType,
+         Reading = ReadStudExceedMeetAllGradePct1,
+         Writing = WriteStudExceedMeetAllGradePct1,
+         Math = MathStudExceedMeetAllGradePct1,
+         Science = ScienceStudExceedMeetAllGradePct1) -> Schools12
+
+
+Schools11 %>%
+  mutate(Year = 2011, DistrictID = NA ) %>%
+  select(DistrictID, 
+         SchoolID = InstID, 
+         Year,
+         Type = SchoolType,
+         Reading = ReadStudExceedMeetAllGradePct1,
+         Writing = WriteStudExceedMeetAllGradePct1,
+         Math = MathStudExceedMeetAllGradePct1,
+         Science = ScienceStudExceedMeetAllGradePct1) -> Schools11
+
+
+Schools10 %>%
+  mutate(Year = 2010, DistrictID = NA ) %>%
+  select(DistrictID, 
+         SchoolID = InstID, 
+         Year,
+         Type = SchoolType,
+         Reading = ReadStudExceedMeetAllGradePct1,
+         Writing = WriteStudExceedMeetAllGradePct1,
+         Math = MathStudExceedMeetAllGradePct1,
+         Science = ScienceStudExceedMeetAllGradePct1) -> Schools10
+
+
+TestScores <- bind_rows(Schools10, Schools11, Schools12, Schools13, Schools14, Schools15, Schools16) 
+rm(Schools10, Schools11, Schools12, Schools13, Schools14, Schools15, Schools16)
+
+# Fix top, bottom and NA coding
+
+TestScores %>%
+  mutate(Reading = as.numeric(case_when(
+    Reading == ">95"  ~  "95",
+    Reading == "<5" ~ "5",
+    Reading == "*" ~ "NA",
+    Reading == "--" ~ "NA",
+    TRUE ~ Reading))) %>%
+  mutate(Writing = as.numeric(case_when(
+    Writing == ">95"  ~  "95",
+    Writing == "<5" ~ "5",
+    Writing == "*" ~ "NA",
+    Writing == "--" ~ "NA",
+    TRUE ~ Writing))) %>%
+  mutate(Math = as.numeric(case_when(
+    Math == ">95"  ~  "95",
+    Math == "<5" ~ "5",
+    Math == "*" ~ "NA",
+    Math == "--" ~ "NA",
+    TRUE ~ Math))) %>%
+  mutate(Science = as.numeric(case_when(
+    Science == ">95"  ~  "95",
+    Science == "<5" ~ "5",
+    Science == "*" ~ "NA",
+    Science == "--" ~ "NA",
+    TRUE ~ Science))) %>%
+  mutate(ELA = as.numeric(case_when(
+    ELA == ">95"  ~  "95",
+    ELA == "<5" ~ "5",
+    ELA == "*" ~ "NA",
+    ELA == "--" ~ "NA",
+    TRUE ~ ELA))) ->TestScores
+
+# Change to numeric  
+TestScores %>%
+  mutate(Reading = as.numeric(Reading),
+         Writing = as.numeric(Writing),
+         Math = as.numeric(Math),
+         Science = as.numeric(Science),
+         ELA = as.numeric(ELA)) ->TestScores
+
+# Fix High school type
+# 
+
+TestScores %>%
+  mutate(Type = case_when(
+    Type == "HSG" ~ "H",
+    Type == "HSA" ~ "H",
+    TRUE ~ Type)) ->TestScores
+
+#Fill missing district codes
+
+TestScores %>%
+  filter(!is.na(DistrictID)) %>%
+  select(DistrictID, SchoolID) %>%
+  unique() -> DistrictSchoolPairs
+
+TestScores %>%
+  left_join(DistrictSchoolPairs, by = "SchoolID", suffix = c(".KILL","")) %>%
+  select(-contains(".KILL")) -> TestScores
+
+rm(DistrictSchoolPairs)  
+```
+
+```{r LoadFinance, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+DistrictFinance <- read.csv("https://s3-us-west-2.amazonaws.com/woodsjeeschools/ActualExpendituresFundFunction30.CSV") 
+
+library(stringr)
+library(dplyr)
+
+# This still has ESD numbers in it and they have odd headcounts on students and expenditures.
+
+Membership %>%
+  select(DistrictID, Year, Enrollment) %>%
+  group_by(DistrictID, Year) %>%
+  summarise(DistrictEnrollment = sum(Enrollment, na.rm = TRUE)) -> DistrictEnrollment
+
+DistrictFinance %>%
+  mutate(YearBeginning = as.numeric(str_sub(as.character(SchlYr),-4) )) %>%
+  mutate(Year = YearBeginning + 1) %>%
+  filter(MajFuncDesc == "Instruction" & Amount > 0 & Year > 2009) %>%
+  select(DistInstID, Year, Amount) %>%
+  group_by(DistInstID, Year) %>%
+  summarise(InstExpenditures = sum(Amount, na.rm = TRUE)) %>%
+  left_join(DistrictEnrollment, by = c("DistInstID" = "DistrictID", "Year"), suffix = c("", ".KILL")) %>%
+  select( -contains(".KILL")) %>%
+  filter(DistrictEnrollment > 0) %>%
+  mutate(PerStudentExp = InstExpenditures/DistrictEnrollment) -> DistrictFinance
+
+  
+```
+
+
+American Economic Review Pointers:
+
+\begin{itemize}
+\item Do not use an "Introduction" heading. Begin your introductory material
+before the first section heading.
+
+\item Avoid style markup (except sparingly for emphasis).
+
+\item Avoid using explicit vertical or horizontal space.
+
+\item Captions are short and go below figures but above tables.
+
+\item The tablenotes or figurenotes environments may be used below tables
+or figures, respectively, as demonstrated below.
+
+\item If you have difficulties with the mathtime package, adjust the package
+options appropriately for your platform. If you can't get it to work, just
+remove the package or see our technical support document online (please
+refer to the author instructions).
+
+\item If you are using an appendix, it goes last, after the bibliography.
+Use regular section headings to make the appendix headings.
+
+\item If you are not using an appendix, you may delete the appendix command
+and sample appendix section heading.
+
+\item Either the natbib package or the harvard package may be used with bibtex.
+To include one of these packages, uncomment the appropriate usepackage command
+above. Note: you can't use both packages at once or compile-time errors will result.
+
+\end{itemize}
+
+\section{First Section in Body}
+
+Sample figure:
+
+\begin{figure}
+Figure here.
+
+\caption{Caption for figure below.}
+\begin{figurenotes}
+Figure notes without optional leadin.
+\end{figurenotes}
+\begin{figurenotes}[Source]
+Figure notes with optional leadin (Source, in this case).
+\end{figurenotes}
+\end{figure}
+
+Sample table:
+
+\begin{table}
+\caption{Caption for table above.}
+
+\begin{tabular}{lll}
+& Heading 1 & Heading 2 \\
+Row 1 & 1 & 2 \\
+Row 2 & 3 & 4%
+\end{tabular}
+\begin{tablenotes}
+Table notes environment without optional leadin.
+\end{tablenotes}
+\begin{tablenotes}[Source]
+Table notes environment with optional leadin (Source, in this case).
+\end{tablenotes}
+\end{table}
+
+References here (manual or bibTeX). If you are using bibTeX, add your bib file
+name in place of BibFile in the bibliography command.
+% Remove or comment out the next two lines if you are not using bibtex.
+\bibliographystyle{aea}
+\bibliography{references}
+
+% The appendix command is issued once, prior to all appendices, if any.
+\appendix
+
+\section{Mathematical Appendix}

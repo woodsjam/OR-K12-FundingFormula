@@ -50,7 +50,7 @@ From  ORS 327.013
 + Funding that puts class size in high cost areas into the low 20s would put class size in rural, low cost, areas into the low teens or even single digits.
 + Equal funding is not the same as equitable treatment.
 
-## Could you move funding to increase aggregate rates?
+## Could you move funding to increase aggregate graduation rates?
 
 + Decreasing class size when class sizes are large generates larger increases than decreasing class sizes when class size is small.
 
@@ -80,3 +80,10 @@ The key is m.
 
 + Big m give more equal class size but reduces incentives to negotiate over salary
 + Small m gives less equal class size but increases incentives to negotiate
+
+## The politics
+
++ Rural vs Urban
+    + Rural will object but:
+        + Transportation takes into account cost difference why not the general
+        + They often get more money because of the small schools grant (another nod to cost difference)
