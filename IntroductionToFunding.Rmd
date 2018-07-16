@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Warning
 
-Slides are not done.  This is just some todo notes for me.
+Slides are not done.
 
 ## Funding Basics
 
@@ -19,7 +19,7 @@ Details on the interaction of property tax with the state allocation.
 + Get more property tax, get less from the state
 + A few districts in a few years get nothing from the state because high property values and few students
 
-## The Two Funding Formulas
+## The Two Major Funding Formulas
 
 From  ORS 327.013
 
@@ -27,9 +27,11 @@ From  ORS 327.013
 + the non-cost sharing general formula
 
 
-## How Equal Funding Results in Unequal Class size
+## How Equal Funding Results in Unequal Class Size and School Year
 
-+ Will pull data for this and make a graph that shows class size vs school year for rural (low salary) and urban (high salary) districts
++ Funding formula gives a roughly fixed dollar amount per student.
++ Districts primarily trade-off class size with school year.
++ Districts with low teacher salaries can afford more teachers per student, or longer school years.
 + Quick illustrative average class size
     + PPS 23(They have extra funding)
     + Parkrose 27
@@ -41,6 +43,89 @@ From  ORS 327.013
     + Baker 12
     + Gervis 21
     + Many in the 10s
+
+## Class size, School year and Salaries
+
+```{r ReadInData, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+library(readr)
+
+OSBASalary <- read_csv("OSBASalarySurvey/EditedSalarySurvey.csv")
+
+Schools16 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/17/RCmediaSchoolsAggregate.csv")
+Schools15 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/16/RCmediaSchoolsAggregate.csv")
+Schools14 <- read.csv("http://www.ode.state.or.us/data/reportcard/media/15/RCmediaSchoolsAggregate.csv")
+
+Schools14 %>%
+  select(District.ID,
+         District.Name,
+         School.ID,
+         School.Name,
+         School.Type,
+         Avg.Class.Size) %>%
+  mutate( Year = 2014,
+          SSClassSize = NA,
+          SciClassSize = NA,
+          MathClassSize = NA,
+          ELAClassSize = NA) -> Schools14
+
+Schools15 %>%
+  select(District.ID,
+         District.Name,
+         School.ID,
+         School.Name,
+         School.Type,
+         Avg.Class.Size = School.Self.Contained.Class.Size,
+         SSClassSize = School.Social.Studies.Class.Size,
+         SciClassSize = School.Science.Class.Size,
+         MathClassSize = School.Math.Class.Size,
+         ELAClassSize = School.ELA.Class.Size
+         ) %>%
+  mutate( Year = 2015,
+          Avg.Class.Size = as.numeric(as.character(Avg.Class.Size))) -> Schools15
+
+Schools16 %>%
+  select(District.ID,
+         District.Name,
+         School.ID,
+         School.Name,
+         School.Type,
+         Avg.Class.Size = School.Self.Contained.Class.Size,
+         SSClassSize = School.Social.Studies.Class.Size,
+         SciClassSize = School.Science.Class.Size,
+         MathClassSize = School.Math.Class.Size,
+         ELAClassSize = School.ELA.Class.Size
+         ) %>%
+  mutate( Year = 2016,
+          Avg.Class.Size = as.numeric(as.character(Avg.Class.Size))
+          ) -> Schools16
+
+Schools <- bind_rows( Schools14, Schools15, Schools16)
+rm( Schools14, Schools15, Schools16)
+
+Schools %>%
+  left_join(OSBASalary, by = c( "District.ID"= "DistrictID","Year" = "EndYear")) %>%
+  mutate(SSClassSize = as.numeric(as.character(SSClassSize)),
+         SciClassSize = as.numeric(as.character(SSClassSize)),
+         MathClassSize = as.numeric(as.character(SSClassSize)),
+         ELAClassSize = as.numeric(as.character(SSClassSize)),
+         StudentDays = as.numeric(as.character(StudentDays))
+         )-> SchoolsClassSize
+rm(Schools,OSBASalary)
+
+```
+
+
+```{r}
+
+SchoolsClassSize %>%
+  filter(School.Type == "E", Avg.Class.Size >= 10, StudentDays > 160, Year == 2015, Avg.Class.Size < 50) %>%
+  ggplot(aes(y = Avg.Class.Size, x = AvgSalary )) +
+  geom_point() +
+  ylab("Class Size") +
+  xlab("Teacher Salary") + geom_smooth()
+
+
+```
 
 
 ## What this Means  
@@ -70,14 +155,15 @@ Oregon Constitution VIII.8(2)
  
 ##  What is the change?
 
-$$Funding~Percentage * (\$4,500 + \$25(Average~Teacher~Experience - State~Average)) * ADMw$$
+$$F * (\$4,500 + \$25(Average~Teacher~Experience - State~Average)) * ADMw$$
 
 to
 
-$$Funding Percentage * (\$4,500 + m * Average~Annual~Teacher~Salary) * ADMw$$
+$$F * (\$4,500 + m * Average~Annual~Teacher~Salary) * ADMw$$
 
 The key is m.
 
++ F is the "Funding Percentage" which adjusts each district's funding to meet the state budget allocation.
 + Big m give more equal class size but reduces incentives to negotiate over salary
 + Small m gives less equal class size but increases incentives to negotiate
 
@@ -87,3 +173,5 @@ The key is m.
     + Rural will object but:
         + Transportation takes into account cost difference why not the general
         + They often get more money because of the small schools grant (another nod to cost difference)
+        
+## Supporting Data 
