@@ -44,10 +44,10 @@ From  ORS 327.013
     + Gervis 21
     + Many in the 10s
 
-## Class size, School year and Salaries
 
 ```{r ReadInData, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 library(readr)
+library(dplyr)
 
 OSBASalary <- read_csv("OSBASalarySurvey/EditedSalarySurvey.csv")
 
@@ -114,8 +114,20 @@ rm(Schools,OSBASalary)
 
 ```
 
+## Class size, School year and Salaries
 
-```{r}
++ OSBA does a salary survey every year with a high response rate.
+    + Covers salary schedules,
+    + Student contact days
++ ODE Reports class sizes and other figures
+    + Average class size for Elementary
+    + By class type, e.g., for middle and high school.
+
+## Elementary Class Size by Salary (2015)
+
+```{r SalaryClass, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(ggplot2)
 
 SchoolsClassSize %>%
   filter(School.Type == "E", Avg.Class.Size >= 10, StudentDays > 160, Year == 2015, Avg.Class.Size < 50) %>%
@@ -127,8 +139,94 @@ SchoolsClassSize %>%
 
 ```
 
+## What it Means
 
-## What this Means  
++ These are school level averages.  
++ There are significant differences between schools within districts and within schools
++ Tendency for districts with higher salaries to have higher class sizes.
+
+## Within District Class Size
+
+```{r ClassSizeVar, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(ggplot2)
+
+# Find districts with more than 3 elementary schools
+# 
+
+SchoolsClassSize %>%
+  filter(School.Type == "E",Year == 2015) %>%
+  group_by(District.ID) %>%
+  summarise(ESchools = n()) %>%
+  filter( ESchools > 3)%>% 
+  select(District.ID) -> MoreThan3E
+           
+
+SchoolsClassSize %>%
+  filter(School.Type == "E", Year == 2015) %>%
+  semi_join( MoreThan3E) %>%
+  select(District.ID, Avg.Class.Size) %>%
+  ggplot(aes(y=Avg.Class.Size, x =as.factor(District.ID))) +
+  geom_boxplot() + ylim(10,40) + xlab("School Districts with at least Three Elementary Schools")
+```
+
+## What about School Year?
+
+```{r SalaryYear, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(ggplot2)
+
+SchoolsClassSize %>%
+  filter(Year == 2015, School.Type =="E")%>%
+  select(District.ID, StudentDays, AvgSalary)%>%
+  unique() %>%
+  ggplot(aes(y = StudentDays, x = AvgSalary )) +
+  geom_point() +
+  ylab("Student Days") +
+  xlab("Teacher Salary")  + ylim(120,200)
+```
+
+
+## Salary and School  Year
+
++ No real relationship
++ Some district choose a short school year, others choose a longer one.
++ A small number of days cut often subsitutes for larger class size
+
+
+## School days and Class Size Together
+
++ Define Teacher Contact Days
+    + $\frac{1}{Class~Size} School~Year$
++ Basic logic
+    + In a class of 20, each student gets, $\frac{1}{20}$ of a day of attention.
+    + 200 day long school year gives the student, $\frac{1}{20} 200 = 10$ contact days with the teacher.
+
+## Teacher Contact Days vs Salary
+
+```{r SalaryContact, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(ggplot2)
+
+SchoolsClassSize %>%
+  filter(School.Type == "E", Avg.Class.Size >= 10, StudentDays > 140, Year == 2015, Avg.Class.Size < 50) %>%
+  ggplot(aes(y = StudentDays * 1/Avg.Class.Size, x = AvgSalary )) +
+  geom_point() +
+  ylab("Teacher Contact Days") +
+  xlab("Teacher Salary") + geom_smooth() + ylim(4,10)
+
+
+```
+
+## What is Going 
+
++ There are some key disticts with average salaries in the 55k to 63K salary range that are keeping some schools with small class sizes.
++ That pops up the Teacher contact days in that range when you look per school.
++ Does not mean it is true per student.
+
+## Teacher Contact Days By Student
+
+## But What About the QEM?  
 
 + Even if you fund the Quality Education Model fully
 + High cost areas will still have high class sizes, lower test scores and lower graduation rates than the low cost areas.
